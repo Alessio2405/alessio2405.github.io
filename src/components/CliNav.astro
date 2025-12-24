@@ -1,5 +1,12 @@
 ---
-const { initialCwd = "~" } = Astro.props;
+const {
+  initialCwd = "~",
+  chatEndpoint = "https://alessio24052-provaapi.hf.space/api/generate",
+  chatContext = "You're an LLM named Dobby created by Alessio2405. Alessio is an AI & Software Engineer from Italy.",
+  temperature = 0.7,
+  top_p = 0.9,
+  max_new_tokens = 256,
+} = Astro.props;
 
 // Useful for GitHub Pages base paths (e.g. /REPO/)
 const BASE_URL = import.meta.env.BASE_URL ?? "/";
@@ -24,7 +31,17 @@ const BASE_URL = import.meta.env.BASE_URL ?? "/";
   </div>
 </div>
 
-<script define:vars={{ initialCwd, BASE_URL }}>
+<script
+  define:vars={{
+    initialCwd,
+    BASE_URL,
+    chatEndpoint,
+    chatContext,
+    temperature,
+    top_p,
+    max_new_tokens,
+  }}
+>
   const out = document.getElementById("cli-out");
   const form = document.getElementById("cli-form");
   const input = document.getElementById("cli-in");
@@ -34,6 +51,13 @@ const BASE_URL = import.meta.env.BASE_URL ?? "/";
   const BASE = (BASE_URL || "/").endsWith("/") ? BASE_URL : BASE_URL + "/";
 
   let cwd = initialCwd;
+  let busy = false;
+
+  // Chat mode state
+  let chatMode = false;
+
+  // ✅ API expects: history: [{user: "...", assistant: "..."}, ...]
+  const chatHistory = [];
 
   const routeFor = (name) => {
     const n = (name || "").toLowerCase();
@@ -43,19 +67,29 @@ const BASE_URL = import.meta.env.BASE_URL ?? "/";
     return null;
   };
 
-  const prompt = () => `alessio@github:${cwd}$`;
-  const setPrompt = () => (promptEl.textContent = prompt());
+  const shellPrompt = () => `alessio@github:${cwd}$`;
+  const chatPrompt = () => `chat@alessio:~$`;
+  const setPrompt = () =>
+    (promptEl.textContent = chatMode ? chatPrompt() : shellPrompt());
 
   const println = (text = "") => {
     out.textContent += text + "\n";
     out.parentElement.scrollTop = out.parentElement.scrollHeight;
   };
 
-  const echoCmd = (cmd) => println(`${prompt()} ${cmd}`);
+  const echoCmd = (cmd) => println(`${shellPrompt()} ${cmd}`);
+  const echoChat = (msg) => println(`${chatPrompt()} ${msg}`);
 
-  const navTo = (path) => {
-    // path is like "blog/" or ""
-    window.location.assign(BASE + path);
+  const navTo = (path) => window.location.assign(BASE + path);
+
+  const setBusy = (v) => {
+    busy = v;
+    input.disabled = v;
+    input.placeholder = v
+      ? "thinking..."
+      : chatMode
+        ? "type message (exit to quit chat)"
+        : "type 'help' and press enter";
   };
 
   const helpText = () =>
@@ -66,14 +100,25 @@ const BASE_URL = import.meta.env.BASE_URL ?? "/";
       "  cd <blog|projects|~> change location (simulated)",
       "  open <blog|projects|~> navigate to page",
       "  crt on|off|toggle     toggle scanlines + vignette",
+      "  chat                 enter chat mode (type messages, get replies)",
       "  blog | projects      shortcuts to open",
       "  clear                clear screen",
       "",
       "Examples:",
       "  ls",
-      "  cd blog",
       "  open projects",
       "  crt on",
+      "  chat",
+    ].join("\n");
+
+  const chatHelpText = () =>
+    [
+      "Chat mode commands:",
+      "  exit | quit | /exit   leave chat mode",
+      "  /clear               clear local chat history",
+      "  /help                show this help",
+      "",
+      "Just type normally to ask questions.",
     ].join("\n");
 
   const doLs = () => {
@@ -101,7 +146,112 @@ const BASE_URL = import.meta.env.BASE_URL ?? "/";
     println(`crt: ${next}`);
   };
 
-  const run = (raw) => {
+  // ✅ API returns JSON: { "output": "..." }
+  const extractText = async (res) => {
+    const ct = res.headers.get("content-type") || "";
+    if (ct.includes("application/json")) {
+      const json = await res.json();
+      if (typeof json === "string") return json;
+      if (typeof json.output === "string") return json.output;
+
+      return (
+        json.generated_text ??
+        json.text ??
+        json.response ??
+        json.answer ??
+        ""
+      );
+    }
+    return await res.text();
+  };
+
+  const callChatApi = async (message) => {
+    const prompt = chatContext
+      ? `CONTEXT:\n${chatContext}\n\nUSER:\n${message}\nASSISTANT:`
+      : message;
+
+    const payload = {
+      prompt,
+      temperature,
+      top_p,
+      max_new_tokens,
+      history: chatHistory.length ? chatHistory : null,
+    };
+
+    const res = await fetch(chatEndpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(
+        `HTTP ${res.status} ${res.statusText}${body ? ` — ${body}` : ""}`
+      );
+    }
+
+    const text = await extractText(res);
+    return (text || "").trim();
+  };
+
+  const enterChatMode = () => {
+    chatMode = true;
+    setPrompt();
+    setBusy(false);
+    println("");
+    println("Entering chat mode. Type your message and press Enter.");
+    println("Use 'exit' to leave. '/help' for commands.");
+  };
+
+  const exitChatMode = () => {
+    chatMode = false;
+    setPrompt();
+    setBusy(false);
+    println("Exited chat mode.");
+  };
+
+  const handleChatLine = async (raw) => {
+    const line = raw.trim();
+    if (!line) return;
+
+    const lc = line.toLowerCase();
+    if (lc === "exit" || lc === "quit" || lc === "/exit") {
+      echoChat(line);
+      exitChatMode();
+      return;
+    }
+    if (lc === "/help") {
+      echoChat(line);
+      println(chatHelpText());
+      return;
+    }
+    if (lc === "/clear") {
+      echoChat(line);
+      chatHistory.length = 0;
+      println("chat: history cleared");
+      return;
+    }
+
+    echoChat(line);
+
+    try {
+      setBusy(true);
+      const reply = await callChatApi(line);
+
+      // ✅ dict history for your API
+      chatHistory.push({ user: line, assistant: reply });
+
+      println(reply || "(empty response)");
+    } catch (err) {
+      println(`chat error: ${err?.message || String(err)}`);
+    } finally {
+      setBusy(false);
+      input.focus();
+    }
+  };
+
+  const runShell = (raw) => {
     const cmdline = raw.trim();
     if (!cmdline) return;
 
@@ -121,13 +271,14 @@ const BASE_URL = import.meta.env.BASE_URL ?? "/";
 
     if (c === "open") {
       const path = routeFor(a0);
-      if (path === null) return println(`open: unknown target: ${args[0] || ""}`);
+      if (path === null)
+        return println(`open: unknown target: ${args[0] || ""}`);
       return navTo(path);
     }
 
-    // crt overlay toggle
     if (c === "crt") {
-      const current = document.documentElement.dataset.crt === "on" ? "on" : "off";
+      const current =
+        document.documentElement.dataset.crt === "on" ? "on" : "off";
       if (!a0) {
         println(`crt: ${current}`);
         println("usage: crt on|off|toggle");
@@ -135,12 +286,19 @@ const BASE_URL = import.meta.env.BASE_URL ?? "/";
       }
       let next = a0;
       if (a0 === "toggle") next = current === "on" ? "off" : "on";
-
       if (next !== "on" && next !== "off") {
         println("usage: crt on|off|toggle");
         return;
       }
       return setCrt(next);
+    }
+
+    // Enter chat mode; optionally send first message if provided.
+    if (c === "chat") {
+      enterChatMode();
+      const rest = args.join(" ").trim();
+      if (rest) handleChatLine(rest);
+      return;
     }
 
     // shortcuts
@@ -159,8 +317,12 @@ const BASE_URL = import.meta.env.BASE_URL ?? "/";
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
+    if (busy) return;
+
     const value = input.value;
     input.value = "";
-    run(value);
+
+    if (chatMode) handleChatLine(value);
+    else runShell(value);
   });
 </script>

@@ -1,0 +1,35 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog')).sort(
+  (a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
+);
+---
+
+<Layout title="Blog - n0w.me">
+  <pre class="text-[var(--fg-dim)] text-xs mb-4">$ ls -la ~/blog/</pre>
+
+  <h1 class="text-xl mb-6">/blog</h1>
+
+  {
+    posts.length > 0 ? (
+      <div>
+        {posts.map((post) => (
+          <div class="mb-3">
+            <span class="text-[var(--fg-dim)] text-xs">{post.data.date}</span>
+            <a href={`/blog/${post.slug}`} class="ml-2">
+              {post.data.title}
+            </a>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <p class="text-[var(--fg-dim)]">No posts yet.</p>
+    )
+  }
+
+  <div class="mt-8">
+    <a href="/" class="text-[var(--fg-dim)]">&lt;- back</a>
+  </div>
+</Layout>

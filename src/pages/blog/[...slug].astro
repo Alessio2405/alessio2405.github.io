@@ -1,0 +1,22 @@
+---
+import RawHTML from '../../layouts/RawHTML.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await post.render();
+---
+
+<RawHTML title={`${post.data.title}`}>
+  <h1>{post.data.title}</h1>
+  <p><i>{post.data.date}</i></p>
+  <hr />
+  <Content />
+</RawHTML>

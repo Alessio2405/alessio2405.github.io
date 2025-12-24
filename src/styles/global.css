@@ -1,0 +1,162 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Default theme - Soft dark */
+:root {
+  --bg: #0d0d0d;
+  --fg: #c8c8c8;
+  --fg-dim: #888888;
+  --fg-bright: #e8e8e8;
+  --link: #7ec8e3;
+  --link-border: #7ec8e333;
+  --border: #252525;
+  --code-bg: #161616;
+}
+
+/* Terminal green theme */
+:root[data-theme='terminal'] {
+  --bg: #0a0a0a;
+  --fg: #00ff00;
+  --fg-dim: #00aa00;
+  --fg-bright: #00ff00;
+  --link: #00ffff;
+  --link-border: #00ffff33;
+  --border: #444;
+  --code-bg: #1a1a1a;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: 'IBM Plex Mono', 'JetBrains Mono', 'Fira Code', 'SF Mono',
+    'Monaco', 'Consolas', monospace;
+  font-size: 15px;
+  line-height: 1.8;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--link);
+  text-decoration: none;
+  border-bottom: 1px solid var(--link-border);
+}
+
+a:hover {
+  border-bottom-color: var(--link);
+}
+
+::selection {
+  background: var(--link);
+  color: var(--bg);
+}
+
+pre,
+code {
+  font-family: inherit;
+}
+
+.prose {
+  color: var(--fg);
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  color: var(--fg-bright);
+  font-weight: 500;
+}
+
+.prose h2 {
+  margin-top: 32px;
+  margin-bottom: 12px;
+}
+
+.prose h3 {
+  margin-top: 24px;
+}
+
+.prose strong,
+.prose b {
+  color: var(--fg-bright);
+}
+
+.prose li::marker {
+  color: var(--fg-dim);
+}
+
+.prose a {
+  color: var(--link);
+  border-bottom: 1px solid var(--link-border);
+  text-decoration: none;
+}
+
+.prose a:hover {
+  border-bottom-color: var(--link);
+}
+
+.prose code {
+  color: var(--link);
+  background: var(--code-bg);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 14px;
+}
+
+.prose pre {
+  background: var(--code-bg) !important;
+  border: 1px solid var(--border);
+  padding: 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.prose pre code {
+  color: var(--fg);
+  background: transparent;
+  padding: 0;
+}
+
+.prose blockquote {
+  border-left: 2px solid var(--border);
+  padding-left: 20px;
+  margin-left: 0;
+  margin: 20px 0;
+  color: var(--fg-dim);
+  font-style: italic;
+}
+
+.prose blockquote p {
+  margin: 0;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 24px;
+}
+
+.prose li {
+  margin: 8px 0;
+}
+
+/* Theme switcher */
+.theme-switch {
+  cursor: pointer;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--fg-dim);
+  font-family: inherit;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.theme-switch:hover {
+  border-color: var(--fg-dim);
+  color: var(--fg);
+}

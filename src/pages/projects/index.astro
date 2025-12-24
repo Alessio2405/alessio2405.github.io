@@ -1,0 +1,42 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+const projects = (await getCollection('projects')).sort(
+  (a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
+);
+---
+
+<Layout title="Projects - n0w.me">
+  <pre class="text-[var(--fg-dim)] text-xs mb-4">$ ls -la ~/projects/</pre>
+
+  <h1 class="text-xl mb-6">/projects</h1>
+
+  {
+    projects.length > 0 ? (
+      <div>
+        {projects.map((project) => (
+          <div class="mb-4">
+            <div>
+              <span class="text-[var(--fg-dim)] text-xs">
+                {project.data.date}
+              </span>
+              <a href={`/projects/${project.slug}`} class="ml-2">
+                {project.data.title}
+              </a>
+            </div>
+            <p class="text-[var(--fg-dim)] text-sm ml-4">
+              {project.data.description}
+            </p>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <p class="text-[var(--fg-dim)]">No projects yet.</p>
+    )
+  }
+
+  <div class="mt-8">
+    <a href="/" class="text-[var(--fg-dim)]">&lt;- back</a>
+  </div>
+</Layout>

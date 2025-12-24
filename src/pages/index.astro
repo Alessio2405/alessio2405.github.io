@@ -1,0 +1,40 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="n0w.me">
+  <pre class="text-[var(--fg-dim)] text-xs mb-6">$ cat ~/about.txt</pre>
+
+  <h1 class="text-xl mb-4">n0w.me</h1>
+
+  <p class="mb-4 text-[var(--fg-dim)]">
+    Sharing thoughts and projects <br />
+    Minimal like CLI.
+  </p>
+
+  <div class="mt-8">
+    <p class="text-[var(--fg-dim)] mb-2">$ ls -la</p>
+    <ul class="ml-4">
+      <li><a href="/blog">drwxr-xr-x blog/</a></li>
+      <li><a href="/projects">drwxr-xr-x projects/</a></li>
+    </ul>
+  </div>
+
+  <div class="mt-8">
+    <p class="text-[var(--fg-dim)] mb-2">$ cat links.txt</p>
+    <ul class="ml-4">
+      <li>
+        -
+        <a href="https://github.com/florianjs" target="_blank"
+          >github.com/florianjs</a
+        >
+      </li>
+      <li>
+        -
+        <a href="https://discord.gg/GRFu35djvz" target="_blank"
+          >Folken's tavern (Discord)</a
+        >
+      </li>
+    </ul>
+  </div>
+</Layout>

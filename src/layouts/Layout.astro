@@ -4,7 +4,7 @@ interface Props {
   description?: string;
 }
 
-const { title, description = 'n0w.me - Terminal style personal site' } = Astro.props;
+const { title, description = 'Alessio2405.github.io - Terminal style personal site' } = Astro.props;
 const currentPath = Astro.url.pathname === '/' ? '~' : Astro.url.pathname;
 ---
 
@@ -21,64 +21,161 @@ const currentPath = Astro.url.pathname === '/' ? '~' : Astro.url.pathname;
       rel="stylesheet"
     />
     <title>{title}</title>
+
+    <!-- Apply theme + CRT very early (prevents flash) -->
     <script is:inline>
-      const theme = localStorage.getItem('theme');
-      if (theme) document.documentElement.setAttribute('data-theme', theme);
+      const savedTheme = localStorage.getItem('theme') || 'terminal';
+      if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+
+      const crt = localStorage.getItem('crt') || 'off';
+      if (crt === 'on') document.documentElement.dataset.crt = 'on';
     </script>
   </head>
+
   <body>
     <div class="min-h-screen max-w-2xl mx-auto px-6 py-8">
       <header class="flex justify-between items-center mb-8">
         <div class="text-[var(--fg-dim)] text-sm">$ cd {currentPath}</div>
-        <button class="theme-switch" id="theme-toggle" title="Toggle theme">
-          <span id="theme-label">terminal</span>
-        </button>
       </header>
 
       <main>
         <slot />
       </main>
 
-      <footer
-        class="mt-16 pt-4 border-t border-[var(--border)] text-xs text-[var(--fg-dim)]"
-      >
+      <footer class="mt-16 pt-4 border-t border-[var(--border)] text-xs text-[var(--fg-dim)]">
         <p>
           <a href="/">~</a> · <a href="/blog">/blog</a> ·
           <a href="/projects">/projects</a>
         </p>
-        <p class="mt-2">&copy; {new Date().getFullYear()} n0w.me</p>
+        <p class="mt-2">&copy; {new Date().getFullYear()} Alessio2405.github.io</p>
       </footer>
     </div>
+
+    <!-- CRT overlay (scanlines + vignette). Toggle via html[data-crt="on"] -->
+    <div class="crt-overlay" aria-hidden="true"></div>
 
     <script is:inline>
       const toggle = document.getElementById('theme-toggle');
       const label = document.getElementById('theme-label');
-      
+
       function updateLabel() {
+        if (!label) return;
         const current = document.documentElement.getAttribute('data-theme');
         label.textContent = current === 'terminal' ? 'soft' : 'terminal';
       }
-      
+
       updateLabel();
-      
-      toggle.addEventListener('click', () => {
-        const current = document.documentElement.getAttribute('data-theme');
-        const next = current === 'terminal' ? '' : 'terminal';
-        
-        if (next) {
-          document.documentElement.setAttribute('data-theme', next);
-          localStorage.setItem('theme', next);
-        } else {
-          document.documentElement.removeAttribute('data-theme');
-          localStorage.removeItem('theme');
-        }
-        
-        updateLabel();
-      });
+
+      // If you removed the button, don't crash:
+      if (toggle) {
+        toggle.addEventListener('click', () => {
+          const current = document.documentElement.getAttribute('data-theme');
+          const next = current === 'terminal' ? '' : 'terminal';
+
+          if (next) {
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.removeItem('theme');
+          }
+
+          updateLabel();
+        });
+      }
     </script>
   </body>
 </html>
 
 <style is:global>
   @import '../styles/global.css';
+
+  /* =========================
+     CRT: scanlines + vignette
+     Toggle with: html[data-crt="on"]
+     ========================= */
+  /* CRT overlay toggle: html[data-crt="on"] */
+/* CRT overlay toggle: html[data-crt="on"] */
+.crt-overlay { display: none; }
+
+html[data-crt="on"] .crt-overlay{
+  display:block;
+  pointer-events:none;
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  opacity:0.55;           /* stronger */
+  mix-blend-mode: normal; /* reliable */
+}
+
+/* Base scanlines */
+html[data-crt="on"] .crt-overlay::before{
+  content:"";
+  position:absolute;
+  inset:0;
+
+  /* scanlines + slight noise banding */
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.06) 0px,
+      rgba(0,0,0,0.07) 1px,
+      rgba(0,0,0,0.00) 3px
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.02) 0px,
+      rgba(0,0,0,0.02) 2px,
+      rgba(0,0,0,0) 6px
+    );
+
+  opacity:0.85;
+}
+
+/* Distortion + vignette + moving “roll” */
+html[data-crt="on"] .crt-overlay::after{
+  content:"";
+  position:absolute;
+  inset:-20%; /* allow movement without revealing edges */
+
+  /* vignette + rolling bright band + warped horizontal streaks */
+  background:
+    radial-gradient(circle at 50% 45%,
+      rgba(0,0,0,0) 55%,
+      rgba(0,0,0,0.75) 100%
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.06) 45%,
+      rgba(255,255,255,0.14) 50%,
+      rgba(255,255,255,0.06) 55%,
+      rgba(255,255,255,0) 100%
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      rgba(102,240,255,0.00) 0px,
+      rgba(102,240,255,0.00) 14px,
+      rgba(102,240,255,0.06) 15px,
+      rgba(102,240,255,0.00) 18px
+    );
+
+  opacity:0.9;
+  transform: translateY(-10%);
+  animation: crt-roll 6s linear infinite;
+  filter: blur(0.2px);
+}
+
+/* Optional: tiny “screen glow” */
+html[data-crt="on"] body{
+  text-shadow: 0 0 10px rgba(102, 240, 255, 0.10);
+}
+
+/* Slow vertical roll */
+@keyframes crt-roll {
+  0%   { transform: translateY(-18%); }
+  100% { transform: translateY(18%); }
+}
+
+
 </style>

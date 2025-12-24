@@ -1,13 +1,10 @@
 ---
 title: 'Hello World'
-description: 'My first blog post on n0w.me'
-date: '2025-11-27'
+description: 'The personal website you are looking at.'
+date: '2025-12-24'
 ---
 
 # Hello World
 
-This is the first post on my new minimalist website.
+First post. Maybe last one.
 
-## Why n0w?
-
-Because the future is now.

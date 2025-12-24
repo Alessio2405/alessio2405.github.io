@@ -1,5 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import CliNav from "../../components/CliNav.astro";
 import { getCollection } from 'astro:content';
 
 const projects = (await getCollection('projects')).sort(
@@ -7,7 +8,7 @@ const projects = (await getCollection('projects')).sort(
 );
 ---
 
-<Layout title="Projects - n0w.me">
+<Layout title="Projects - Alessio2405.github.io">
   <pre class="text-[var(--fg-dim)] text-xs mb-4">$ ls -la ~/projects/</pre>
 
   <h1 class="text-xl mb-6">/projects</h1>
@@ -35,6 +36,8 @@ const projects = (await getCollection('projects')).sort(
       <p class="text-[var(--fg-dim)]">No projects yet.</p>
     )
   }
+
+  <CliNav initialCwd="~/projects" />
 
   <div class="mt-8">
     <a href="/" class="text-[var(--fg-dim)]">&lt;- back</a>

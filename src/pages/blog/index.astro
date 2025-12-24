@@ -1,5 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import CliNav from "../../components/CliNav.astro";
 import { getCollection } from 'astro:content';
 
 const posts = (await getCollection('blog')).sort(
@@ -7,7 +8,7 @@ const posts = (await getCollection('blog')).sort(
 );
 ---
 
-<Layout title="Blog - n0w.me">
+<Layout title="Blog - Alessio2405.github.io">
   <pre class="text-[var(--fg-dim)] text-xs mb-4">$ ls -la ~/blog/</pre>
 
   <h1 class="text-xl mb-6">/blog</h1>
@@ -16,11 +17,18 @@ const posts = (await getCollection('blog')).sort(
     posts.length > 0 ? (
       <div>
         {posts.map((post) => (
-          <div class="mb-3">
-            <span class="text-[var(--fg-dim)] text-xs">{post.data.date}</span>
-            <a href={`/blog/${post.slug}`} class="ml-2">
-              {post.data.title}
-            </a>
+          <div class="mb-4">
+            <div>
+              <span class="text-[var(--fg-dim)] text-xs">
+                {post.data.date}
+              </span>
+              <a href={`/blog/${post.slug}`} class="ml-2">
+                {post.data.title}
+              </a>
+            </div>
+            <p class="text-[var(--fg-dim)] text-sm ml-4">
+              {post.data.description}
+            </p>
           </div>
         ))}
       </div>
@@ -28,6 +36,8 @@ const posts = (await getCollection('blog')).sort(
       <p class="text-[var(--fg-dim)]">No posts yet.</p>
     )
   }
+
+  <CliNav initialCwd="~/blog" />
 
   <div class="mt-8">
     <a href="/" class="text-[var(--fg-dim)]">&lt;- back</a>

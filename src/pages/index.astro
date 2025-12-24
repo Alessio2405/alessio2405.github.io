@@ -1,18 +1,38 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import CliNav from "../components/CliNav.astro";
 ---
 
-<Layout title="n0w.me">
+<Layout title="Alessio2405.github.io">
   <pre class="text-[var(--fg-dim)] text-xs mb-6">$ cat ~/about.txt</pre>
 
-  <h1 class="text-xl mb-4">n0w.me</h1>
+  <h1 class="text-xl mb-4">Alessio2405.github.io</h1>
 
-  <p class="mb-4 text-[var(--fg-dim)]">
-    Sharing thoughts and projects <br />
-    Minimal like CLI.
-  </p>
+  <div class="mt-6">
+    <p class="text-[var(--fg-dim)] mb-2">$ neofetch</p>
 
-  <div class="mt-8">
+    <pre class="ml-4 text-xs leading-5">
+──────────────
+HANDLE: alessio2405
+ROLE: SW & Math Engineer (AI)
+FOCUS: RLM · World Models · Transformers
+PROJECTS: zone-aware models · memory/flashbacks · gpt-2-in-c
+HIGH-LEVEL: Python · .NET · JavaScript
+LOW-LEVEL: C · CUDA experiments · compilers · interop
+    </pre>
+
+    <p class="ml-4 text-[var(--fg-dim)] text-xs">
+      <span class="cursor">█</span>
+    </p>
+  </div>
+
+  <style>
+    .cursor { display: inline-block; animation: blink 1s steps(1) infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+  </style>
+
+
+  <div class="mt-4">
     <p class="text-[var(--fg-dim)] mb-2">$ ls -la</p>
     <ul class="ml-4">
       <li><a href="/blog">drwxr-xr-x blog/</a></li>
@@ -20,21 +40,19 @@ import Layout from '../layouts/Layout.astro';
     </ul>
   </div>
 
-  <div class="mt-8">
+  <div class="mt-4">
     <p class="text-[var(--fg-dim)] mb-2">$ cat links.txt</p>
     <ul class="ml-4">
       <li>
         -
-        <a href="https://github.com/florianjs" target="_blank"
-          >github.com/florianjs</a
-        >
-      </li>
-      <li>
-        -
-        <a href="https://discord.gg/GRFu35djvz" target="_blank"
-          >Folken's tavern (Discord)</a
+        <a href="https://github.com/Alessio2405" target="_blank"
+          >github.com/Alessio2405</a
         >
       </li>
     </ul>
   </div>
+
+    <div class="mt-8">
+      <CliNav initialCwd="~" />
+    </div>
 </Layout>

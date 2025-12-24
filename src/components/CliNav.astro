@@ -1,0 +1,166 @@
+---
+const { initialCwd = "~" } = Astro.props;
+
+// Useful for GitHub Pages base paths (e.g. /REPO/)
+const BASE_URL = import.meta.env.BASE_URL ?? "/";
+---
+
+<div class="mt-10">
+  <p class="text-[var(--fg-dim)] mb-2">$ shell</p>
+
+  <div class="rounded-md border border-[color:var(--border)] p-3">
+    <div id="cli-out" class="text-sm whitespace-pre-wrap leading-6"></div>
+
+    <form id="cli-form" class="mt-3 flex items-center gap-2">
+      <span id="cli-prompt" class="text-[var(--fg-dim)]"></span>
+      <input
+        id="cli-in"
+        class="bg-transparent outline-none w-full text-[var(--fg)]"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="type 'help' and press enter"
+      />
+    </form>
+  </div>
+</div>
+
+<script define:vars={{ initialCwd, BASE_URL }}>
+  const out = document.getElementById("cli-out");
+  const form = document.getElementById("cli-form");
+  const input = document.getElementById("cli-in");
+  const promptEl = document.getElementById("cli-prompt");
+
+  // Normalize BASE_URL like "/repo/" or "/"
+  const BASE = (BASE_URL || "/").endsWith("/") ? BASE_URL : BASE_URL + "/";
+
+  let cwd = initialCwd;
+
+  const routeFor = (name) => {
+    const n = (name || "").toLowerCase();
+    if (n === "~" || n === "home") return "";
+    if (n === "blog") return "blog/";
+    if (n === "project" || n === "projects") return "projects/";
+    return null;
+  };
+
+  const prompt = () => `alessio@github:${cwd}$`;
+  const setPrompt = () => (promptEl.textContent = prompt());
+
+  const println = (text = "") => {
+    out.textContent += text + "\n";
+    out.parentElement.scrollTop = out.parentElement.scrollHeight;
+  };
+
+  const echoCmd = (cmd) => println(`${prompt()} ${cmd}`);
+
+  const navTo = (path) => {
+    // path is like "blog/" or ""
+    window.location.assign(BASE + path);
+  };
+
+  const helpText = () =>
+    [
+      "Commands:",
+      "  help                 show this help",
+      "  ls                   list sections",
+      "  cd <blog|projects|~> change location (simulated)",
+      "  open <blog|projects|~> navigate to page",
+      "  crt on|off|toggle     toggle scanlines + vignette",
+      "  blog | projects      shortcuts to open",
+      "  clear                clear screen",
+      "",
+      "Examples:",
+      "  ls",
+      "  cd blog",
+      "  open projects",
+      "  crt on",
+    ].join("\n");
+
+  const doLs = () => {
+    println("drwxr-xr-x blog/");
+    println("drwxr-xr-x projects/");
+  };
+
+  const doCd = (target) => {
+    if (!target) return println("cd: missing operand");
+    const t = target.toLowerCase();
+
+    if (t === "~" || t === "home") cwd = "~";
+    else if (t === "..") cwd = "~";
+    else if (t === "blog") cwd = "~/blog";
+    else if (t === "project" || t === "projects") cwd = "~/projects";
+    else return println(`cd: no such file or directory: ${target}`);
+
+    setPrompt();
+  };
+
+  const setCrt = (next) => {
+    if (next === "on") document.documentElement.dataset.crt = "on";
+    else delete document.documentElement.dataset.crt;
+    localStorage.setItem("crt", next);
+    println(`crt: ${next}`);
+  };
+
+  const run = (raw) => {
+    const cmdline = raw.trim();
+    if (!cmdline) return;
+
+    echoCmd(cmdline);
+
+    const [cmd, ...args] = cmdline.split(/\s+/);
+    const c = cmd.toLowerCase();
+    const a0 = (args[0] || "").toLowerCase();
+
+    if (c === "help") return println(helpText());
+    if (c === "clear") {
+      out.textContent = "";
+      return;
+    }
+    if (c === "ls") return doLs();
+    if (c === "cd") return doCd(a0);
+
+    if (c === "open") {
+      const path = routeFor(a0);
+      if (path === null) return println(`open: unknown target: ${args[0] || ""}`);
+      return navTo(path);
+    }
+
+    // crt overlay toggle
+    if (c === "crt") {
+      const current = document.documentElement.dataset.crt === "on" ? "on" : "off";
+      if (!a0) {
+        println(`crt: ${current}`);
+        println("usage: crt on|off|toggle");
+        return;
+      }
+      let next = a0;
+      if (a0 === "toggle") next = current === "on" ? "off" : "on";
+
+      if (next !== "on" && next !== "off") {
+        println("usage: crt on|off|toggle");
+        return;
+      }
+      return setCrt(next);
+    }
+
+    // shortcuts
+    if (c === "blog") return navTo("blog/");
+    if (c === "project" || c === "projects") return navTo("projects/");
+    if (c === "~" || c === "home") return navTo("");
+
+    println(`command not found: ${cmd}`);
+    println("type 'help' to see available commands");
+  };
+
+  // boot
+  setPrompt();
+  println("Type 'help' to see commands.");
+  input.focus();
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const value = input.value;
+    input.value = "";
+    run(value);
+  });
+</script>

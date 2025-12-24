@@ -2,7 +2,7 @@
 
 A terminal-inspired personal website built with [Astro](https://astro.build), Tailwind CSS, and deployed on Cloudflare Pages.
 
-🌐 **Demo:** [n0w.me](https://n0w.me)
+🌐 **Demo:** [Alessio2405.github.io](https://Alessio2405.github.io)
 
 ## ✨ Features
 
